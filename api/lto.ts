@@ -15,7 +15,7 @@ export default async function handler(req: any, res: any) {
 
     // Serve YAML from /public (static file)
     const host = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
-    const yamlFile = fileParam || "csr_lto_2025-08_final_v4.yaml";
+    const yamlFile = fileParam || "csr_lto_2025_08_final_v4.yaml";
     const yamlUrl = `${host}/${yamlFile}`;
 
     const r = await fetch(yamlUrl, { cache: "no-store" });
