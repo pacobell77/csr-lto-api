@@ -7,7 +7,18 @@ function send(res, status, body) {
 }
 
 module.exports = async (req, res) => {
-  try {
+    try {
+    // --- TOKEN GUARD -------------------------------------------------------
+    const requiredToken = process.env.LTO_API_TOKEN;
+    const authHeader = (req.headers && req.headers.authorization) || "";
+    const provided = authHeader.startsWith("Bearer ")
+      ? authHeader.slice(7).trim()
+      : "";
+    if (requiredToken && provided !== requiredToken) {
+      return send(res, 401, { error: "unauthorized", hint: "missing_or_bad_token" });
+    }
+    // ----------------------------------------------------------------------
+  
     const path = (req.query && req.query.path) || "allowlist"; // "allowlist" | "offers"
     const key = (req.query && req.query.key) || "";
     const fileParam = (req.query && req.query.filename) || "";
