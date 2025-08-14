@@ -48,18 +48,48 @@ module.exports = async (req, res) => {
       return send(res, 422, { error: "allowlist_missing", detail: "allow_only_these_keys not found at top-level or in manifest" });
     }
 
-    const toArray = (v) => Array.isArray(v) ? v : (v ? [String(v)] : []);
-    const safeOffer = (k) => {
-      const raw = ns[k] || {};
-      return {
-        key: k,
-        summary: raw.summary ?? null,
-        expiration: raw.expiration ?? null,
-        official_domains: toArray(raw.official_domains),
-        terms_urls: toArray(raw.terms_urls),
-        enrollment_urls: toArray(raw.enrollment_urls)
-      };
-    };
+// put this above safeOffer (inside the main handler is fine)
+const soonDays = Number(process.env.LTO_EXPIRING_SOON_DAYS || 30);
+const toArray = (v) => Array.isArray(v) ? v : (v ? [String(v)] : []);
+
+// replace the entire safeOffer with this version
+const safeOffer = (k) => {
+  const raw = ns[k] || {};
+
+  const expRaw = raw.expiration ?? null;
+  let expiration_date = null;              // "YYYY-MM-DD"
+  let days_until_expiration = null;        // integer days (can be negative before we clamp)
+  let status = expRaw ? "active" : "no_expiration";
+
+  if (expRaw) {
+    const d = new Date(expRaw);
+    if (!isNaN(d)) {
+      expiration_date = d.toISOString().slice(0, 10);
+      const diffMs = d.getTime() - Date.now();
+      const days = Math.ceil(diffMs / 86400000);
+      days_until_expiration = days;
+
+      if (days < 0) status = "expired";
+      else if (days <= soonDays) status = "expiring_soon";
+      else status = "active";
+    } else {
+      status = "no_expiration";
+    }
+  }
+
+  return {
+    key: k,
+    summary: raw.summary ?? null,
+    expiration: expRaw,            // original value from YAML
+    expiration_date,               // normalized YYYY-MM-DD
+    days_until_expiration,         // integer days
+    status,                        // "active" | "expiring_soon" | "expired" | "no_expiration"
+    official_domains: toArray(raw.official_domains),
+    terms_urls: toArray(raw.terms_urls),
+    enrollment_urls: toArray(raw.enrollment_urls)
+  };
+};
+
 
     if (path === "allowlist") {
       return send(res, 200, {
