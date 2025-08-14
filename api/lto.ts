@@ -13,16 +13,24 @@ export default async function handler(req: any, res: any) {
     const key  = (req.query?.key as string) || "";
     const fileParam = (req.query?.filename as string) || ""; // optional override
 
-    // Serve YAML from /public (static file)
-    const host = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000";
-    const yamlFile = fileParam || "csr_lto_2025_08_final_v4.yaml";
-    const yamlUrl = `${host}/${yamlFile}`;
+    // Build base URL from the incoming request headers (works reliably on Vercel)
+    const proto = (req.headers["x-forwarded-proto"] as string) || "https";
+    const hostHeader =
+      (req.headers["x-forwarded-host"] as string) ||
+      (req.headers["host"] as string);
+    const yamlFile = fileParam || "csr_lto_2025_08_final_v4.yaml"; // uses underscores
+    const yamlUrl = `${proto}://${hostHeader}/${yamlFile}`;
 
     const r = await fetch(yamlUrl, { cache: "no-store" });
     if (!r.ok) return send(res, 502, { error: "fetch_failed", status: r.status, yamlUrl });
 
     const text = await r.text();
-    const data: any = yamlLoad(text);
+    let data: any;
+    try {
+      data = yamlLoad(text);
+    } catch (err: any) {
+      return send(res, 422, { error: "yaml_parse_error", detail: String(err?.message ?? err) });
+    }
 
     const ns = data?.LTO_v2025_08;
     if (!ns) return send(res, 422, { error: "namespace_missing", detail: "LTO_v2025_08 not found" });
@@ -60,6 +68,7 @@ export default async function handler(req: any, res: any) {
 
     return send(res, 400, { error: "unknown_path", hint: "use ?path=allowlist or ?path=offers" });
   } catch (e: any) {
+    console.error("LTO_API_ERROR", e);
     return send(res, 500, { error: "server_error", detail: String(e?.message ?? e) });
   }
 }
