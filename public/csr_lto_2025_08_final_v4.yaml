@@ -8,8 +8,17 @@ LTO_v2025_08:
 
   Aeroplan_5000_Point_Certificate_Aug2025:
     summary: One-time certificate to add 5,000 Aeroplan points after meeting the promo’s eligible activity criteria during the offer window.
-    expiration: 2025-08-31
+    expiration: 2025-08-31    
+    official_domains:
+      - aircanada.com
+      - chase.com
+
+    
 
   IHG_Platinum_Elite_Status:
     summary: Complimentary IHG One Rewards Platinum Elite status for a limited time when linked/activated via the Chase offer flow.
     expiration: 2025-12-31
+    official_domains:
+      - ihg.com
+      - chase.com
+
