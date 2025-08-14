@@ -2,7 +2,6 @@
   "name": "csr-lto-api",
   "private": true,
   "version": "1.0.0",
-  "type": "module",
   "dependencies": {
     "js-yaml": "4.1.0"
   }
