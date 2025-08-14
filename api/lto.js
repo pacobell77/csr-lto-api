@@ -37,12 +37,16 @@ module.exports = async (req, res) => {
       return send(res, 422, { error: "allowlist_missing", detail: "allow_only_these_keys not found at top-level or in manifest" });
     }
 
+    const toArray = (v) => Array.isArray(v) ? v : (v ? [String(v)] : []);
     const safeOffer = (k) => {
       const raw = ns[k] || {};
       return {
         key: k,
         summary: raw.summary ?? null,
-        expiration: raw.expiration ?? null
+        expiration: raw.expiration ?? null,
+        official_domains: toArray(raw.official_domains),
+        terms_urls: toArray(raw.terms_urls),
+        enrollment_urls: toArray(raw.enrollment_urls)
       };
     };
 
